@@ -89,4 +89,14 @@ public class DashboardAdapter extends FragmentPagerAdapter {
             notifyDataSetChanged();
         }
     }
+
+    public int indexOfDashboard(String dashboardName) {
+        int i;
+        for (i = 0; i < mDashboards.size(); i++) {
+            if (mDashboards.get(i).getName().equals(dashboardName)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 }

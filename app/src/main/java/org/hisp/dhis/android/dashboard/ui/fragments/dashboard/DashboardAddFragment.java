@@ -41,6 +41,7 @@ import android.widget.TextView;
 import org.hisp.dhis.android.dashboard.R;
 import org.hisp.dhis.android.dashboard.api.models.Dashboard;
 import org.hisp.dhis.android.dashboard.api.utils.EventBusProvider;
+import org.hisp.dhis.android.dashboard.ui.events.DataEvent;
 import org.hisp.dhis.android.dashboard.ui.events.UiEvent;
 import org.hisp.dhis.android.dashboard.ui.fragments.BaseDialogFragment;
 
@@ -92,6 +93,7 @@ public final class DashboardAddFragment extends BaseDialogFragment {
             }
 
             EventBusProvider.post(new UiEvent(UiEvent.UiEventType.SYNC_DASHBOARDS));
+            EventBusProvider.post(new DataEvent(newDashboard.getName(), DataEvent.DataEventType.ADDED));
         }
         dismiss();
     }

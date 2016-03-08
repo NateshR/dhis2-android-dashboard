@@ -57,6 +57,7 @@ import org.hisp.dhis.android.dashboard.api.persistence.loaders.DbLoader;
 import org.hisp.dhis.android.dashboard.api.persistence.loaders.Query;
 import org.hisp.dhis.android.dashboard.api.persistence.preferences.ResourceType;
 import org.hisp.dhis.android.dashboard.ui.adapters.DashboardAdapter;
+import org.hisp.dhis.android.dashboard.ui.events.DataEvent;
 import org.hisp.dhis.android.dashboard.ui.events.UiEvent;
 import org.hisp.dhis.android.dashboard.ui.fragments.BaseFragment;
 
@@ -89,6 +90,10 @@ public class DashboardViewPagerFragment extends BaseFragment
     SmoothProgressBar mProgressBar;
 
     DashboardAdapter mDashboardAdapter;
+
+    private int dataChanged = -1;
+    private String receivedDashboardName;
+    private boolean updateLocalDataChanged = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
@@ -210,12 +215,66 @@ public class DashboardViewPagerFragment extends BaseFragment
         }
     }
 
-    private void setDashboards(List<Dashboard> dashboards) {
-        mDashboardAdapter.swapData(dashboards);
-        mTabs.removeAllTabs();
+    @Subscribe
+    @SuppressWarnings("unused")
+    public void onDataEventReceived(DataEvent dataEvent) {
+        updateLocalDataChanged = true;
+        if (dataEvent.getmDataEventType() == DataEvent.DataEventType.ADDED) {
+            dataChanged = 1;
+        } else if (dataEvent.getmDataEventType() == DataEvent.DataEventType.DELETED) {
+            dataChanged = 0;
+        }
+        receivedDashboardName = dataEvent.getmPassDashboardName();
+    }
 
-        if (dashboards != null && !dashboards.isEmpty()) {
-            mTabs.setupWithViewPager(mViewPager);
+
+    private void setDashboards(List<Dashboard> dashboards) {
+        if (dataChanged == -1) {
+            mDashboardAdapter.swapData(dashboards);
+            mTabs.removeAllTabs();
+
+            if (dashboards != null && !dashboards.isEmpty()) {
+                mTabs.setupWithViewPager(mViewPager);
+            }
+        } else if (dataChanged == 1) {
+            //Reflect added dashboards in UI once
+            if (updateLocalDataChanged) {
+                updateLocalDataChanged = false;
+                mDashboardAdapter.swapData(dashboards);
+                if (receivedDashboardName != null && !receivedDashboardName.isEmpty()) {
+                    final int index = mDashboardAdapter.indexOfDashboard(receivedDashboardName);
+                    mViewPager.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mViewPager.setCurrentItem(index, true);
+                        }
+                    });
+                    mTabs.setupWithViewPager(mViewPager);
+                }
+            }//Only updates dashboards fetched from server
+            else {
+                mDashboardAdapter.swapData(dashboards);
+            }
+        } else if (dataChanged == 0) {
+            //Reflect added dashboards in UI once
+            if (updateLocalDataChanged) {
+                updateLocalDataChanged = false;
+                if (receivedDashboardName != null && !receivedDashboardName.isEmpty()) {
+                    final int index = mDashboardAdapter.indexOfDashboard(receivedDashboardName);
+                    mDashboardAdapter.swapData(dashboards);
+                    mViewPager.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mViewPager.setCurrentItem(index - 1, true);
+                        }
+                    });
+
+                    mTabs.setupWithViewPager(mViewPager);
+                }
+            }//Only updates dashboards fetched from server
+            else {
+                mDashboardAdapter.swapData(dashboards);
+            }
         }
     }
 

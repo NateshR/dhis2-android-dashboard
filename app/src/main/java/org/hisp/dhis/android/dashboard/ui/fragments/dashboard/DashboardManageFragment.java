@@ -46,6 +46,7 @@ import org.hisp.dhis.android.dashboard.R;
 import org.hisp.dhis.android.dashboard.api.models.Dashboard;
 import org.hisp.dhis.android.dashboard.api.models.Dashboard$Table;
 import org.hisp.dhis.android.dashboard.api.utils.EventBusProvider;
+import org.hisp.dhis.android.dashboard.ui.events.DataEvent;
 import org.hisp.dhis.android.dashboard.ui.events.UiEvent;
 import org.hisp.dhis.android.dashboard.ui.fragments.BaseDialogFragment;
 
@@ -151,6 +152,7 @@ public final class DashboardManageFragment extends BaseDialogFragment {
                     getDhisService().syncDashboards();
                     EventBusProvider.post(new UiEvent(UiEvent.UiEventType.SYNC_DASHBOARDS));
                 }
+                EventBusProvider.post(new DataEvent(mDashboard.getName(), DataEvent.DataEventType.DELETED));
             }
             case R.id.close_dialog_button: {
                 dismiss();
